@@ -1,8 +1,8 @@
 # Day one, day seven — Star Catcher
 
 ![competition](https://make.fun/badge/post-tiktok-day-one-day-seven-20261123-0327.svg)
-![rank](https://make.fun/badge/post-tiktok-day-one-day-seven-20261123-0327/rank.svg)
-![reward](https://make.fun/badge/post-tiktok-day-one-day-seven-20261123-0327/reward.svg)
+![rank](https://make.fun/badge/post-tiktok-day-one-day-seven-20261123-0327/saifulsidik801-ship-it/post-tiktok-day7-star-catcher-v2/rank.svg)
+![reward](https://make.fun/badge/post-tiktok-day-one-day-seven-20261123-0327/saifulsidik801-ship-it/post-tiktok-day7-star-catcher-v2/reward.svg)
 
 A make.fun entry for **Day one, day seven** (post-tiktok-day-one-day-seven-20261123-0327, $20, top 10 x $2).
 
