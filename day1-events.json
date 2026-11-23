@@ -1,0 +1,40 @@
+{
+ "offset": 0.272,
+ "events": [
+  {
+   "t": 7.345,
+   "type": "catch",
+   "points": 50
+  },
+  {
+   "t": 8.144,
+   "type": "catch",
+   "points": 52
+  },
+  {
+   "t": 8.455,
+   "type": "catch",
+   "points": 14
+  },
+  {
+   "t": 9.256,
+   "type": "catch",
+   "points": 16
+  },
+  {
+   "t": 10.044,
+   "type": "catch",
+   "points": 18
+  },
+  {
+   "t": 11.037,
+   "type": "catch",
+   "points": 20
+  },
+  {
+   "t": 12.239,
+   "type": "catch",
+   "points": 20
+  }
+ ]
+}

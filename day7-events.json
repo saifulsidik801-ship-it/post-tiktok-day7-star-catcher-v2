@@ -1,0 +1,125 @@
+{
+ "offset": 0.117,
+ "events": [
+  {
+   "t": 4.996,
+   "type": "powerup",
+   "combo": 1,
+   "points": 40
+  },
+  {
+   "t": 9.42,
+   "type": "powerup",
+   "combo": 3,
+   "points": 50
+  },
+  {
+   "t": 9.604,
+   "type": "levelup",
+   "combo": 3,
+   "points": 2
+  },
+  {
+   "t": 9.903,
+   "type": "powerup",
+   "combo": 4,
+   "points": 50
+  },
+  {
+   "t": 15.212,
+   "type": "catch",
+   "combo": 5,
+   "points": 30
+  },
+  {
+   "t": 18.593,
+   "type": "powerup",
+   "combo": 6,
+   "points": 50
+  },
+  {
+   "t": 18.724,
+   "type": "catch",
+   "combo": 7,
+   "points": 20
+  },
+  {
+   "t": 19.118,
+   "type": "catch",
+   "combo": 8,
+   "points": 20
+  },
+  {
+   "t": 19.508,
+   "type": "powerup",
+   "combo": 9,
+   "points": 50
+  },
+  {
+   "t": 19.632,
+   "type": "levelup",
+   "combo": 9,
+   "points": 4
+  },
+  {
+   "t": 20.026,
+   "type": "catch",
+   "combo": 10,
+   "points": 20
+  },
+  {
+   "t": 23.895,
+   "type": "catch",
+   "combo": 11,
+   "points": 10
+  },
+  {
+   "t": 24.099,
+   "type": "catch",
+   "combo": 12,
+   "points": 10
+  },
+  {
+   "t": 26.394,
+   "type": "levelup",
+   "combo": 13,
+   "points": 5
+  },
+  {
+   "t": 27.031,
+   "type": "miss",
+   "combo": 0,
+   "points": 0
+  },
+  {
+   "t": 27.224,
+   "type": "catch",
+   "combo": 1,
+   "points": 10
+  },
+  {
+   "t": 28.697,
+   "type": "powerup",
+   "combo": 2,
+   "points": 25
+  },
+  {
+   "t": 28.824,
+   "type": "catch",
+   "combo": 3,
+   "points": 10
+  },
+  {
+   "t": 29.526,
+   "type": "powerup",
+   "combo": 4,
+   "points": 25
+  },
+  {
+   "t": 29.764,
+   "type": "catch",
+   "combo": 5,
+   "points": 10
+  }
+ ]
+}

@@ -1,0 +1,132 @@
+[
+ {
+  "file": "sfx-pop-c1.wav",
+  "at": 0.1,
+  "vol": 1
+ },
+ {
+  "file": "sfx-pop-c6.wav",
+  "at": 0.8,
+  "vol": 1
+ },
+ {
+  "file": "sfx-pop-c1.wav",
+  "at": 5.145,
+  "vol": 1
+ },
+ {
+  "file": "sfx-pop-c2.wav",
+  "at": 5.944,
+  "vol": 1
+ },
+ {
+  "file": "sfx-pop-c3.wav",
+  "at": 6.255,
+  "vol": 1
+ },
+ {
+  "file": "sfx-pop-c4.wav",
+  "at": 7.056,
+  "vol": 1
+ },
+ {
+  "file": "sfx-pop-c5.wav",
+  "at": 7.844,
+  "vol": 1
+ },
+ {
+  "file": "sfx-pop-c6.wav",
+  "at": 8.837,
+  "vol": 1
+ },
+ {
+  "file": "sfx-whoosh.wav",
+  "at": 9.4,
+  "vol": 1
+ },
+ {
+  "file": "sfx-fanfare.wav",
+  "at": 9.6,
+  "vol": 0.95
+ },
+ {
+  "file": "sfx-chime.wav",
+  "at": 14.12,
+  "vol": 0.95
+ },
+ {
+  "file": "sfx-fanfare.wav",
+  "at": 14.304,
+  "vol": 0.95
+ },
+ {
+  "file": "sfx-chime.wav",
+  "at": 14.603,
+  "vol": 0.95
+ },
+ {
+  "file": "sfx-pop-c5.wav",
+  "at": 19.912,
+  "vol": 1
+ },
+ {
+  "file": "sfx-chime.wav",
+  "at": 23.293,
+  "vol": 0.95
+ },
+ {
+  "file": "sfx-pop-c7.wav",
+  "at": 23.424,
+  "vol": 1
+ },
+ {
+  "file": "sfx-pop-c8.wav",
+  "at": 23.818,
+  "vol": 1
+ },
+ {
+  "file": "sfx-chime.wav",
+  "at": 24.208,
+  "vol": 0.95
+ },
+ {
+  "file": "sfx-fanfare.wav",
+  "at": 24.332,
+  "vol": 0.95
+ },
+ {
+  "file": "sfx-pop-c10.wav",
+  "at": 24.726,
+  "vol": 1
+ },
+ {
+  "file": "sfx-chime.wav",
+  "at": 26.5,
+  "vol": 0.8
+ },
+ {
+  "file": "sfx-pop-c11.wav",
+  "at": 28.595,
+  "vol": 1
+ },
+ {
+  "file": "sfx-pop-c12.wav",
+  "at": 28.799,
+  "vol": 1
+ },
+ {
+  "file": "sfx-fanfare.wav",
+  "at": 31.094,
+  "vol": 0.95
+ },
+ {
+  "file": "sfx-miss.wav",
+  "at": 31.731,
+  "vol": 0.95
+ },
+ {
+  "file": "sfx-pop-c1.wav",
+  "at": 31.924,
+  "vol": 1
+ }
+]

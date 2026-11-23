@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Star Catcher — Day 7</title>
+<style>
+  @font-face { font-family: "JetBrains Mono"; src: url("../JetBrainsMono-Bold.ttf") format("truetype"); font-weight: 700; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #0a0424; }
+  body { font-family: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace; }
+  canvas { display: block; width: 100vw; height: 100vh; }
+  /* Safe margins: nothing closer than 64px to any edge. */
+  #hud {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 5;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 70px 64px 0; color: #fff; pointer-events: none;
+  }
+  #hud .label { font-size: 24px; font-weight: 700; letter-spacing: 5px; opacity: .8; }
+  #hud .value { font-size: 76px; font-weight: 700; line-height: 1.05; text-shadow: 0 4px 24px rgba(0,0,0,.55); }
+  #hud .mid { text-align: center; }
+  #hud .mid .value { color: #ffd23f; }
+  #hud .right { text-align: right; }
+  #combo {
+    position: fixed; top: 218px; left: 50%; transform: translateX(-50%); z-index: 5;
+    width: 520px; text-align: center; color: #fff; pointer-events: none;
+  }
+  #combo .clabel { font-size: 30px; font-weight: 700; letter-spacing: 4px; text-shadow: 0 0 18px rgba(255,210,63,.9); }
+  #combo .bar { margin-top: 10px; height: 22px; border-radius: 11px; background: rgba(255,255,255,.18);
+    border: 2px solid rgba(255,255,255,.55); overflow: hidden; }
+  #combo .fill { height: 100%; width: 0%; border-radius: 9px;
+    background: linear-gradient(90deg, #ffd23f, #ff7a18, #ff2e88); transition: width .15s; }
+  #title {
+    position: fixed; left: 0; right: 0; top: 300px; z-index: 5; text-align: center;
+    color: #fff; pointer-events: none; padding: 0 70px;
+  }
+  #title h1 {
+    font-size: 64px; font-weight: 700; letter-spacing: 3px; line-height: 1.1;
+    text-shadow: 0 0 34px rgba(255, 210, 63, .75), 0 4px 0 rgba(0,0,0,.35);
+  }
+  #title h1 .star { color: #ffd23f; }
+  #title p { margin-top: 14px; font-size: 26px; font-weight: 700; letter-spacing: 2px; opacity: .95;
+    text-shadow: 0 2px 12px rgba(0,0,0,.6); }
+  #title p .hi { color: #4de3ff; }
+  #banner {
+    position: fixed; left: 0; right: 0; bottom: 380px; z-index: 6; text-align: center;
+    color: #ffd23f; font-size: 64px; font-weight: 700; letter-spacing: 3px;
+    opacity: 0; transition: opacity .2s; pointer-events: none; padding: 0 70px;
+    text-shadow: 0 0 30px rgba(255, 210, 63, .9), 0 4px 0 rgba(0,0,0,.4);
+  }
+  #levelup {
+    position: fixed; left: 0; right: 0; top: 760px; z-index: 6; text-align: center;
+    color: #7cfc66; font-size: 88px; font-weight: 700; letter-spacing: 4px;
+    opacity: 0; transition: opacity .2s; pointer-events: none; padding: 0 70px;
+    text-shadow: 0 0 40px rgba(124,252,102,.9), 0 4px 0 rgba(0,0,0,.4);
+  }
+  #over {
+    position: fixed; inset: 0; z-index: 7; display: none;
+    align-items: center; justify-content: center; flex-direction: column;
+    background: rgba(10, 4, 36, .78); color: #fff; text-align: center; padding: 0 70px;
+  }
+  #over h2 { font-size: 88px; font-weight: 700; letter-spacing: 4px; }
+  #over .final { font-size: 130px; font-weight: 700; color: #ffd23f; margin: 18px 0; }
+  #over p { font-size: 30px; font-weight: 700; opacity: .9; letter-spacing: 2px; }
+</style>
+</head>
+<body>
+<div id="hud">
+  <div><div class="label">SCORE</div><div class="value" id="score">0</div></div>
+  <div class="mid"><div class="label">TIME</div><div class="value" id="time">60</div><div class="label" id="level" style="margin-top:10px">LEVEL 1</div></div>
+  <div class="right"><div class="label">LIVES</div><div class="value" id="lives">&#9733;&#9733;&#9733;</div></div>
+</div>
+<div id="combo"><div class="clabel" id="combotext">COMBO x0</div><div class="bar"><div class="fill" id="combofill"></div></div></div>
+<div id="title"><h1><span class="star">&#9733;</span> STAR CATCHER</h1><p>catch the falling stars &middot; <span class="hi">6 types &middot; power-ups</span></p></div>
+<div id="banner"></div>
+<div id="levelup"></div>
+<div id="over"><h2>TIME UP!</h2><div class="final" id="final">0</div><p>tap anywhere to play again</p></div>
+<canvas id="game"></canvas>
+<script>
+(function () {
+  var cv = document.getElementById('game');
+  var ctx = cv.getContext('2d');
+  var W = 0, H = 0, DPR = Math.min(window.devicePixelRatio || 1, 2);
+  var basket = { x: 0, w: 324, y: 0, h: 54, tx: 0, tilt: 0 };
+  function resize() {
+    W = window.innerWidth; H = window.innerHeight;
+    cv.width = W * DPR; cv.height = H * DPR; ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    basket.w = Math.max(280, W * 0.30); basket.y = H - 170;
+  }
+  var params = new URLSearchParams(location.search);
+  var AUTO = params.get('auto') === '1';
+  var TIME_LIMIT = parseInt(params.get('t') || '60', 10);
+  var state = 'play';
+  var score = 0, lives = 3, timeLeft = TIME_LIMIT, combo = 0, level = 1;
+  var doubleUntil = 0, slowUntil = 0;
+  var stars = [], parts = [], floats = [], rings = [], trails = [];
+  var bgFar = [], bgMid = [], bgNear = [], shoots = [];
+  var spawnIn = 0, elapsed = 0, last = performance.now(), shootIn = 2;
+  var eventSeq = 0;
+  var lastEvent = null;
+  var scoreEl = document.getElementById('score');
+  var timeEl = document.getElementById('time');
+  var livesEl = document.getElementById('lives');
+  var levelEl = document.getElementById('level');
+  var comboTextEl = document.getElementById('combotext');
+  var comboFillEl = document.getElementById('combofill');
+  var bannerEl = document.getElementById('banner');
+  var levelupEl = document.getElementById('levelup');
+  var overEl = document.getElementById('over');
+  var finalEl = document.getElementById('final');
+  var bannerTimer = null, levelTimer = null;
+
+  // --- rich background: 3 parallax star layers + planets + shooting stars ---
+  function mkLayer(n, rMin, rMax, speed) {
+    var a = [];
+    for (var i = 0; i < n; i++) a.push({ x: Math.random(), y: Math.random(), r: rMin + Math.random() * (rMax - rMin), tw: Math.random() * Math.PI * 2, sp: speed * (0.5 + Math.random()) });
+    return a;
+  }
+  bgFar = mkLayer(90, 0.8, 2.0, 6);
+  bgMid = mkLayer(60, 1.6, 3.2, 16);
+  bgNear = mkLayer(28, 2.6, 4.6, 34);
+
+  function emit(type, comboN, points) {
+    lastEvent = { seq: ++eventSeq, type: type, t: elapsed, combo: comboN, points: points || 0 };
+  }
+  function banner(text) {
+    bannerEl.textContent = text; bannerEl.style.opacity = 1;
+    clearTimeout(bannerTimer);
+    bannerTimer = setTimeout(function () { bannerEl.style.opacity = 0; }, 900);
+  }
+  function levelBanner(text) {
+    levelupEl.textContent = text; levelupEl.style.opacity = 1;
+    clearTimeout(levelTimer);
+    levelTimer = setTimeout(function () { levelupEl.style.opacity = 0; }, 1200);
+  }
+  // 6 star types: gold, pink, cyan(slow), green(life), purple(2x), orange(fast)
+  var TYPES = [
+    { color: '#ffd23f', r: 34, vy: 1.0, pts: 10, w: 0.42, power: null },
+    { color: '#ff9df5', r: 40, vy: 1.1, pts: 50, w: 0.10, power: null },
+    { color: '#4de3ff', r: 38, vy: 0.9, pts: 25, w: 0.14, power: 'slow' },
+    { color: '#7cfc66', r: 38, vy: 0.9, pts: 25, w: 0.12, power: 'life' },
+    { color: '#b78cff', r: 40, vy: 1.0, pts: 40, w: 0.12, power: 'double' },
+    { color: '#ff7a3c', r: 32, vy: 1.5, pts: 15, w: 0.10, power: null }
+  ];
+  function pickType() {
+    var r = Math.random(), acc = 0;
+    for (var i = 0; i < TYPES.length; i++) { acc += TYPES[i].w; if (r <= acc) return TYPES[i]; }
+    return TYPES[0];
+  }
+  function spawnStar() {
+    var ty = pickType();
+    var speedMul = 1 + (level - 1) * 0.12;
+    stars.push({
+      x: 80 + Math.random() * (W - 160), y: -50,
+      r: ty.r * (0.9 + Math.random() * 0.25),
+      vy: (300 + Math.random() * 320) * ty.vy * speedMul,
+      vx: (Math.random() - 0.5) * 90,
+      rot: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 3.0,
+      color: ty.color, pts: ty.pts, power: ty.power, trail: []
+    });
+  }
+  function burst(x, y, color, n) {
+    for (var i = 0; i < n; i++) {
+      var a = Math.random() * Math.PI * 2, sp = 140 + Math.random() * 420;
+      parts.push({ x: x, y: y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 80, life: 0.6 + Math.random() * 0.4, max: 1.0, r: 4 + Math.random() * 7, color: color });
+    }
+    rings.push({ x: x, y: y, r: 8, life: 0.45, max: 0.45, color: color });
+  }
+  function drawStar(x, y, r, rot, color, glow) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(rot);
+    ctx.fillStyle = color; ctx.shadowColor = color; ctx.shadowBlur = glow || 42;
+    ctx.beginPath();
+    for (var i = 0; i < 10; i++) {
+      var rr = i % 2 === 0 ? r : r * 0.45, a = -Math.PI / 2 + i * Math.PI / 5;
+      ctx[i === 0 ? 'moveTo' : 'lineTo'](Math.cos(a) * rr, Math.sin(a) * rr);
+    }
+    ctx.closePath(); ctx.fill();
+    ctx.shadowBlur = 0; ctx.fillStyle = 'rgba(255,255,255,.85)';
+    ctx.beginPath(); ctx.arc(0, 0, r * 0.22, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+  function drawPlanet(x, y, r, c1, c2, ring) {
+    var g = ctx.createRadialGradient(x - r * 0.35, y - r * 0.35, r * 0.1, x, y, r);
+    g.addColorStop(0, c1); g.addColorStop(1, c2);
+    ctx.save(); ctx.globalAlpha = 0.9; ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    if (ring) {
+      ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 7;
+      ctx.beginPath(); ctx.ellipse(x, y, r * 1.7, r * 0.42, -0.35, 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function endGame() {
+    state = 'over';
+    finalEl.textContent = score;
+    overEl.style.display = 'flex';
+    emit('end', combo, score);
+  }
+  function reset() {
+    score = 0; lives = 3; timeLeft = TIME_LIMIT; combo = 0; level = 1; elapsed = 0;
+    doubleUntil = 0; slowUntil = 0;
+    stars = []; parts = []; floats = []; rings = [];
+    scoreEl.textContent = '0'; timeEl.textContent = String(TIME_LIMIT);
+    livesEl.textContent = '\u2605\u2605\u2605'; levelEl.textContent = 'LEVEL 1';
+    comboTextEl.textContent = 'COMBO x0'; comboFillEl.style.width = '0%';
+    overEl.style.display = 'none';
+    state = 'play';
+  }
+  function targetX() {
+    var best = null, bestY = -1;
+    for (var i = 0; i < stars.length; i++) {
+      if (stars[i].y > bestY) { bestY = stars[i].y; best = stars[i]; }
+    }
+    return best ? best.x : W / 2;
+  }
+
+  function step(now) {
+    var dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (state === 'play') {
+      elapsed += dt; timeLeft = Math.max(0, TIME_LIMIT - elapsed);
+      timeEl.textContent = String(Math.ceil(timeLeft));
+      if (timeLeft <= 0) { endGame(); }
+      var newLevel = 1 + Math.floor(score / 150);
+      if (newLevel > level) {
+        level = newLevel; levelEl.textContent = 'LEVEL ' + level;
+        levelBanner('LEVEL ' + level + '!');
+        emit('levelup', combo, level);
+      }
+      spawnIn -= dt;
+      var interval = Math.max(0.22, 0.52 - (level - 1) * 0.05);
+      if (spawnIn <= 0) { spawnStar(); spawnIn = interval; }
+      shootIn -= dt;
+      if (shootIn <= 0) {
+        shoots.push({ x: Math.random() * W * 0.7 + W * 0.15, y: -20, vx: 500 + Math.random() * 300, vy: 320 + Math.random() * 200, life: 0.9 });
+        shootIn = 3 + Math.random() * 3;
+      }
+      if (AUTO) { basket.tx = targetX(); basket.x += (basket.tx - basket.x - basket.w / 2) * Math.min(1, dt * 12); }
+      else { basket.x += (basket.tx - basket.x) * Math.min(1, dt * 14); }
+      basket.tilt = Math.max(-0.12, Math.min(0.12, (basket.tx - basket.x) * 0.0004));
+      basket.x = Math.max(0, Math.min(W - basket.w, basket.x));
+      var slowMul = (elapsed < slowUntil) ? 0.55 : 1;
+      for (var i = stars.length - 1; i >= 0; i--) {
+        var s = stars[i];
+        s.y += s.vy * slowMul * dt; s.x += s.vx * dt; s.rot += s.vr * dt;
+        s.trail.push({ x: s.x, y: s.y }); if (s.trail.length > 7) s.trail.shift();
+        if (s.y - s.r > basket.y - 6 && s.y < basket.y + basket.h + 34 &&
+            s.x > basket.x - 12 && s.x < basket.x + basket.w + 12) {
+          combo++;
+          var mult = (elapsed < doubleUntil) ? 2 : 1;
+          var pts = s.pts * mult;
+          score += pts + Math.min(combo - 1, 9) * 2;
+          scoreEl.textContent = String(score);
+          comboTextEl.textContent = 'COMBO x' + combo;
+          comboFillEl.style.width = Math.min(100, combo * 10) + '%';
+          burst(s.x, s.y, s.color, 26);
+          floats.push({ x: s.x, y: s.y, txt: '+' + pts, life: 1.0, color: s.color, big: s.power !== null });
+          if (s.power === 'slow') { slowUntil = elapsed + 3; banner('SLOW-MO!'); emit('powerup', combo, pts); }
+          else if (s.power === 'life') { lives = Math.min(5, lives + 1); livesEl.textContent = '\u2605'.repeat(lives); banner('EXTRA LIFE!'); emit('powerup', combo, pts); }
+          else if (s.power === 'double') { doubleUntil = elapsed + 5; banner('DOUBLE POINTS!'); emit('powerup', combo, pts); }
+          else { emit('catch', combo, pts); }
+          if (combo >= 5 && combo % 5 === 0) banner('COMBO x' + combo + '!');
+          stars.splice(i, 1);
+        } else if (s.y - s.r > H) {
+          stars.splice(i, 1); combo = 0;
+          comboTextEl.textContent = 'COMBO x0'; comboFillEl.style.width = '0%';
+          lives--;
+          livesEl.textContent = '\u2605'.repeat(Math.max(0, lives)) + '\u2606'.repeat(Math.max(0, 3 - lives));
+          banner('MISSED!');
+          emit('miss', combo, 0);
+          if (lives <= 0) { endGame(); }
+        }
+      }
+    }
+    for (var j = parts.length - 1; j >= 0; j--) {
+      var p = parts[j]; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 520 * dt; p.life -= dt;
+      if (p.life <= 0) parts.splice(j, 1);
+    }
+    for (var k = rings.length - 1; k >= 0; k--) {
+      var rg = rings[k]; rg.r += 900 * dt; rg.life -= dt;
+      if (rg.life <= 0) rings.splice(k, 1);
+    }
+    for (var f = floats.length - 1; f >= 0; f--) {
+      var fl = floats[f]; fl.y -= 80 * dt; fl.life -= dt;
+      if (fl.life <= 0) floats.splice(f, 1);
+    }
+    for (var s2 = shoots.length - 1; s2 >= 0; s2--) {
+      var sh = shoots[s2]; sh.x += sh.vx * dt; sh.y += sh.vy * dt; sh.life -= dt;
+      if (sh.life <= 0) shoots.splice(s2, 1);
+    }
+    // --- draw: nebula gradient, planets, parallax starfield ---
+    var g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#0a0424'); g.addColorStop(0.45, '#1c0b52'); g.addColorStop(0.8, '#3d0f5e'); g.addColorStop(1, '#5c1a6e');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    var neb = ctx.createRadialGradient(W * 0.8, H * 0.25, 40, W * 0.8, H * 0.25, 520);
+    neb.addColorStop(0, 'rgba(255,46,136,.20)'); neb.addColorStop(1, 'rgba(255,46,136,0)');
+    ctx.fillStyle = neb; ctx.fillRect(0, 0, W, H);
+    var neb2 = ctx.createRadialGradient(W * 0.15, H * 0.62, 40, W * 0.15, H * 0.62, 460);
+    neb2.addColorStop(0, 'rgba(77,227,255,.14)'); neb2.addColorStop(1, 'rgba(77,227,255,0)');
+    ctx.fillStyle = neb2; ctx.fillRect(0, 0, W, H);
+    drawPlanet(W * 0.82, H * 0.22, 130, '#c9a7ff', '#5b2a9d', true);
+    drawPlanet(W * 0.16, H * 0.74, 92, '#8ef2e4', '#0e6f6a', false);
+    function drawLayer(layer, drift) {
+      for (var b = 0; b < layer.length; b++) {
+        var s3 = layer[b]; s3.tw += dt * s3.sp; s3.y += drift * dt / H; if (s3.y > 1) s3.y = 0;
+        ctx.globalAlpha = 0.3 + 0.7 * Math.abs(Math.sin(s3.tw));
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.arc(s3.x * W, s3.y * H, s3.r, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    drawLayer(bgFar, 6); drawLayer(bgMid, 16); drawLayer(bgNear, 34);
+    ctx.globalAlpha = 1;
+    for (var q = 0; q < shoots.length; q++) {
+      var st = shoots[q];
+      var sg = ctx.createLinearGradient(st.x, st.y, st.x - 160, st.y - 100);
+      sg.addColorStop(0, 'rgba(255,255,255,.95)'); sg.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.strokeStyle = sg; ctx.lineWidth = 4; ctx.globalAlpha = Math.max(0, st.life);
+      ctx.beginPath(); ctx.moveTo(st.x, st.y); ctx.lineTo(st.x - 160, st.y - 100); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    for (var m = 0; m < stars.length; m++) {
+      var st2 = stars[m];
+      for (var tr = 0; tr < st2.trail.length; tr++) {
+        var tp = st2.trail[tr];
+        ctx.globalAlpha = (tr / st2.trail.length) * 0.35;
+        ctx.fillStyle = st2.color;
+        ctx.beginPath(); ctx.arc(tp.x, tp.y, st2.r * 0.3, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      drawStar(st2.x, st2.y, st2.r, st2.rot, st2.color, 46);
+      if (st2.power) {
+        ctx.save(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 4; ctx.shadowColor = '#fff'; ctx.shadowBlur = 18;
+        ctx.beginPath(); ctx.arc(st2.x, st2.y, st2.r + 10, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+      }
+    }
+    for (var n = 0; n < rings.length; n++) {
+      var rn = rings[n];
+      ctx.globalAlpha = Math.max(0, rn.life / rn.max);
+      ctx.strokeStyle = rn.color; ctx.lineWidth = 6;
+      ctx.beginPath(); ctx.arc(rn.x, rn.y, rn.r, 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    for (var v = 0; v < parts.length; v++) {
+      var pv = parts[v];
+      ctx.globalAlpha = Math.max(0, pv.life / pv.max);
+      ctx.fillStyle = pv.color;
+      ctx.beginPath(); ctx.arc(pv.x, pv.y, pv.r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    ctx.textAlign = 'center';
+    for (var f2 = 0; f2 < floats.length; f2++) {
+      var fl2 = floats[f2];
+      ctx.globalAlpha = Math.max(0, fl2.life / 1.0);
+      ctx.fillStyle = fl2.color;
+      ctx.font = '700 ' + (fl2.big ? 54 : 44) + 'px "JetBrains Mono", monospace';
+      ctx.shadowColor = fl2.color; ctx.shadowBlur = 22;
+      ctx.fillText(fl2.txt, fl2.x, fl2.y);
+    }
+    ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+    // --- basket: big, glowing, tilts with motion ---
+    var bx = basket.x, by = basket.y;
+    ctx.save(); ctx.translate(bx + basket.w / 2, by + basket.h / 2); ctx.rotate(basket.tilt); ctx.translate(-(bx + basket.w / 2), -(by + basket.h / 2));
+    ctx.shadowColor = '#ffb300'; ctx.shadowBlur = 34;
+    var bg2 = ctx.createLinearGradient(bx, by, bx, by + basket.h);
+    bg2.addColorStop(0, '#ffe14d'); bg2.addColorStop(0.55, '#ffb300'); bg2.addColorStop(1, '#ff7a18');
+    ctx.fillStyle = bg2;
+    ctx.beginPath();
+    ctx.moveTo(bx, by); ctx.lineTo(bx + basket.w, by);
+    ctx.lineTo(bx + basket.w - 26, by + basket.h); ctx.lineTo(bx + 26, by + basket.h);
+    ctx.closePath(); ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(255,255,255,.35)';
+    ctx.fillRect(bx + 16, by + 7, basket.w - 32, 8);
+    ctx.restore();
+    requestAnimationFrame(step);
+  }
+  function pointer(x) { basket.tx = Math.max(0, Math.min(W - basket.w, x - basket.w / 2)); }
+  window.addEventListener('pointermove', function (e) { pointer(e.clientX); });
+  window.addEventListener('pointerdown', function (e) {
+    if (state === 'over') { reset(); return; }
+    pointer(e.clientX);
+  });
+  window.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowLeft') basket.tx = Math.max(0, basket.tx - 110);
+    if (e.key === 'ArrowRight') basket.tx = Math.min(W - basket.w, basket.tx + 110);
+    if ((e.key === ' ' || e.key === 'Enter') && state === 'over') reset();
+  });
+  window.addEventListener('resize', resize);
+  window.__game = {
+    get score() { return score; }, get state() { return state; },
+    get timeLeft() { return timeLeft; }, get level() { return level; },
+    get combo() { return combo; }, get lives() { return lives; },
+    get lastEvent() { return lastEvent; }, get elapsed() { return elapsed; }
+  };
+  resize();
+  basket.x = (W - basket.w) / 2; basket.tx = basket.x;
+  requestAnimationFrame(step);
+})();
+</script>
+</body>
+</html>
